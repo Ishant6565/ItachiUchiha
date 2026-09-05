@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>うちはイタチ — UCHIHA ITACHI | The Silent Guardian</title>
+  <meta name="description" content="An interactive cinematic tribute to Uchiha Itachi. Experience the awakening of the Sharingan, eye-tracked gaze, forbidden jutsu, and the Will of Fire." />
+  
+  <!-- Favicon (Inline SVG Sharingan) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23050506' stroke='%23ff2b2b' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='28' fill='%23c0121f'/%3E%3Ccircle cx='50' cy='50' r='10' fill='%23050506'/%3E%3Ccircle cx='50' cy='28' r='5' fill='%23050506'/%3E%3Ccircle cx='31' cy='61' r='5' fill='%23050506'/%3E%3Ccircle cx='69' cy='61' r='5' fill='%23050506'/%3E%3C/svg%3E" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Kaku+Gothic+New:wght@300;400;500;700;900&family=Cinzel:wght@400;600;700;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ══════════ PRELOADER ══════════ -->
+<div class="loader" id="loader">
+  <div class="loader__inner">
+    <div class="loader__glyph">写輪眼</div>
+    <div class="loader__subglyph">UCHIHA ITACHI ARCHIVE</div>
+    <div class="loader__bar"><span id="loaderFill"></span></div>
+    <div class="loader__meta">
+      <span>起動中 / INITIALIZING CHAKRA</span>
+      <span id="loaderPct">00%</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ AMBIENT LAYERS ══════════ -->
+<div class="grain" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+<div class="tsukuyomi-veil" id="tsukuyomiVeil" aria-hidden="true"></div>
+
+<!-- ══════════ AMATERASU — 黒炎 / BLACK FLAME HEM ══════════ -->
+<div class="amaterasu-bed" aria-hidden="true"></div>
+<canvas class="amaterasu" id="amaterasuCanvas" aria-hidden="true"></canvas>
+
+<!-- ══════════ STORM / PROCEDURAL LIGHTNING ══════════ -->
+<div class="storm" aria-hidden="true">
+  <div class="storm__flash" id="stormFlash"></div>
+  <svg class="storm__bolt" id="stormBolt" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+    <path id="boltPath" d="" fill="none" stroke="#fff" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <path id="boltGlow" d="" fill="none" stroke="#9fd8ff" stroke-width="10" stroke-linejoin="round" stroke-linecap="round" opacity=".5"/>
+  </svg>
+</div>
+
+<!-- ══════════ CUSTOM SHARINGAN CURSOR ══════════ -->
+<div class="cursor" id="cursor" aria-hidden="true">
+  <span class="cursor__dot"></span>
+  <span class="cursor__ring"></span>
+</div>
+
+<!-- ══════════ CROW OVERLAY CANVAS ══════════ -->
+<canvas class="crow-canvas" id="crowCanvas" aria-hidden="true"></canvas>
+
+<!-- ══════════ FIXED CHROME NAVIGATION ══════════ -->
+<header class="chrome">
+  <a href="#scrub" class="chrome__mark" title="うちは一族 / Uchiha Clan">
+    <svg viewBox="0 0 100 100" class="uchiwa" aria-hidden="true">
+      <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <path d="M50 12 A38 38 0 0 1 50 88 A19 19 0 0 1 50 50 A19 19 0 0 0 50 12Z" fill="currentColor" opacity=".92"/>
+      <circle cx="50" cy="31" r="6.5" fill="var(--ink)"/>
+      <circle cx="50" cy="69" r="6.5" fill="currentColor"/>
+    </svg>
+    <div class="chrome__brand">
+      <span class="chrome__title">UCHIHA</span>
+      <span class="chrome__tag">ITACHI ARCHIVE</span>
+    </div>
+  </a>
+
+  <nav class="chrome__nav">
+    <a href="#scrub" data-jp="覚">AWAKEN</a>
+    <a href="#eyes" data-jp="眼">EYES</a>
+    <a href="#jutsu" data-jp="術">JUTSU</a>
+    <a href="#quote" data-jp="言">WORDS</a>
+    <a href="#end" data-jp="終">LEGACY</a>
+  </nav>
+
+  <div class="chrome__actions">
+    <!-- Crows Button -->
+    <button class="chrome__btn chrome__btn--crow" id="crowBtn" type="button" title="烏分身 / Scatter Crows">
+      <span class="btn-kanji">烏</span>
+      <span class="btn-label">CROWS</span>
+    </button>
+
+    <!-- Tsukuyomi Toggle -->
+    <button class="chrome__btn chrome__btn--tsukuyomi" id="tsukuyomiToggle" type="button" aria-pressed="false" title="月読 / Tsukuyomi Genjutsu Mode">
+      <span class="btn-kanji">月読</span>
+      <span class="btn-label" id="tsukuyomiState">NORMAL</span>
+    </button>
+
+    <!-- Sound Toggle with Audio waves -->
+    <button class="chrome__sound" id="soundToggle" type="button" aria-pressed="false" title="雷鳴と気 / Atmospheric Chakra Sound">
+      <div class="sound-bars" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <span class="chrome__sound-jp">音</span>
+      <span class="chrome__sound-state" id="soundState">OFF</span>
+    </button>
+  </div>
+</header>
+
+<!-- Side Rails -->
+<div class="rail rail--left" aria-hidden="true">
+  <span>暁 · AKATSUKI · 木ノ葉隠れの里 · THE SHADOW GUARDIAN</span>
+</div>
+<div class="rail rail--right" aria-hidden="true">
+  <span id="railScroll">SCROLL 000%</span>
+</div>
+
+<!-- Scroll Hint -->
+<div class="hint" id="hint">
+  <span class="hint__jp">下へスクロール</span>
+  <span class="hint__line"></span>
+  <span class="hint__en">SCROLL TO AWAKEN HIS EYES</span>
+</div>
+
+<main>
+
+<!-- ══════════ ACT I — SCROLL SCRUB (AWAKENING) ══════════ -->
+<section class="scrub" id="scrub">
+  <div class="scrub__sticky">
+    <canvas id="mainCanvas"></canvas>
+    <div class="scrub__glow" id="scrubGlow"></div>
+
+    <!-- Phase Captions -->
+    <div class="phase" data-phase="0">
+      <div class="phase__eyebrow">FIRST PHASE · 孤独</div>
+      <h1 class="phase__jp">静寂</h1>
+      <p class="phase__en">SILENCE</p>
+      <p class="phase__sub">「一人で背負うと決めた。」<br>He chose to carry the entire darkness alone.</p>
+    </div>
+
+    <div class="phase" data-phase="1">
+      <div class="phase__eyebrow">SECOND PHASE · 覚醒</div>
+      <h2 class="phase__jp">開眼</h2>
+      <p class="phase__en">AWAKENING</p>
+      <p class="phase__sub">「本当の力は、目を開けた者にしか見えない。」<br>True perception reveals the unseen truth behind illusions.</p>
+    </div>
+
+    <div class="phase" data-phase="2">
+      <div class="phase__eyebrow">THIRD PHASE · 写輪眼</div>
+      <h2 class="phase__jp">写輪眼</h2>
+      <p class="phase__en">SHARINGAN</p>
+      <p class="phase__sub">Three crimson tomoe revolving in silence. Nothing escapes his sight.</p>
+    </div>
+
+    <div class="phase" data-phase="3">
+      <div class="phase__eyebrow">FOURTH PHASE · 幻術</div>
+      <h2 class="phase__jp">千羽烏</h2>
+      <p class="phase__en">A THOUSAND CROWS</p>
+      <p class="phase__sub">「幻術も、真実も、同じ羽で運ばれる。」<br>The boundary between nightmare and devotion scatters in the wind.</p>
+    </div>
+
+    <!-- Cinematic Hero Title Block -->
+    <div class="titleblock" id="titleblock">
+      <div class="titleblock__badge">
+        <span>KONOHAGAKURE · AKATSUKI ANBU</span>
+      </div>
+      <p class="titleblock__kicker">木ノ葉隠れの里 · 忍の生ける伝説</p>
+      <h1 class="titleblock__jp">うちは<span>イタチ</span></h1>
+      <p class="titleblock__en">U C H I H A &nbsp; I T A C H I</p>
+      <p class="titleblock__desc">The rogue who butchered his clan to preserve peace, living as a villain so his younger brother could survive as a hero.</p>
+    </div>
+
+    <canvas id="featherCanvas" class="feathers"></canvas>
+  </div>
+</section>
+
+<!-- ══════════ ACT II — MOUSE-TRACKED EYES (MANGEKYŌ) ══════════ -->
+<section class="eyes" id="eyes">
+  <div class="eyes__sticky">
+    <canvas id="eyeCanvas"></canvas>
+    <div class="eyes__flare" id="eyeFlare"></div>
+
+    <!-- HUD Overlay Frame -->
+    <div class="eyes__frame">
+      <div class="eyes__label eyes__label--tl">
+        <span class="hud-tag">OCULAR STATE</span>
+        万華鏡写輪眼 · MANGEKYŌ
+      </div>
+      <div class="eyes__label eyes__label--tr">
+        <span class="hud-tag">TARGET LOCK</span>
+        TRACKING ACTIVE · 60 FPS
+      </div>
+      <div class="eyes__label eyes__label--bl" id="eyeReadout">
+        <span class="hud-tag">BEARING</span>
+        視線 中央 00.0° / FRAME 01
+      </div>
+      <div class="eyes__label eyes__label--br">
+        <span class="hud-tag">INTERACTION</span>
+        動かせ · MOVE YOUR CURSOR
+      </div>
+    </div>
+
+    <div class="eyes__copy">
+      <span class="eyebrow">GAZE OF OMNISCIENCE</span>
+      <h2>見つめ<span>返せ</span></h2>
+      <p>彼はあなたを見ている。 — Wherever you move your cursor, his gaze follows.</p>
+      <p class="eyes__note">51 high-definition ocular frames dynamically synthesized across a calibrated horizontal gaze LUT.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ ACT III — FORBIDDEN ARTS (JUTSU GRID) ══════════ -->
+<section class="jutsu" id="jutsu">
+  <!-- Background Plate revealed under the WebGL ghost cursor -->
+  <div class="jutsu__reveal" id="jutsuReveal" aria-hidden="true"></div>
+  <div class="jutsu__rain" aria-hidden="true"></div>
+  <!-- WebGL Ghost Cursor Smoke Shader Canvas -->
+  <canvas class="ghost" id="ghostCanvas" aria-hidden="true"></canvas>
+
+  <div class="jutsu__inner">
+    <div class="jutsu__head">
+      <span class="eyebrow" data-px="0.10">禁術 · FORBIDDEN ARTS</span>
+      <h2 data-px="0.18">其の眼に<br>宿る神術</h2>
+      <p data-px="0.26">The forbidden techniques that lived behind those bleeding eyes — and the staggering agony each demanded. He never wielded a single one of them for his own glory.</p>
+      <div class="jutsu__meta" data-px="0.34">
+        <span><i>血継限界</i>KEKKEI GENKAI</span>
+        <span><i>黒炎と幻影</i>FLAME & ILLUSION</span>
+        <span><i>四つの術</i>FOUR TECHNIQUES</span>
+      </div>
+      <p class="jutsu__hint" data-px="0.40">✦ Move your cursor to ignite the chakra flame · Click any jutsu to inspect details</p>
+    </div>
+
+    <!-- 4 Grand Interactive Jutsu Cards -->
+    <div class="jutsu__grid">
+      <!-- Card 1: Tsukuyomi -->
+      <article class="card" data-jutsu="tsukuyomi" tabindex="0">
+        <div class="card__seal">月</div>
+        <div class="card__top">
+          <span class="card__num">01 / GENJUTSU</span>
+          <span class="card__rank">S-RANK KINJUTSU</span>
+        </div>
+        <h3 class="card__jp">月読</h3>
+        <p class="card__ro">TSUKUYOMI · GOD OF THE MOON</p>
+        <p class="card__txt">Traps the victim's consciousness within an absolute mental realm where Itachi controls time, space, and mass. Seventy-two hours of agonizing torture transpire in less than a fraction of a second in the physical world.</p>
+        <div class="card__stats">
+          <div class="stat-item"><span>RANGE</span><b>0 — 5m</b></div>
+          <div class="stat-item"><span>TYPE</span><b>Ocular Genjutsu</b></div>
+          <div class="stat-item"><span>COST</span><b>Left Eye Vision</b></div>
+        </div>
+        <div class="card__foot">
+          <i>精神支配</i>
+          <span>CLICK TO TRIGGER ILLUSION</span>
+        </div>
+      </article>
+
+      <!-- Card 2: Amaterasu -->
+      <article class="card" data-jutsu="amaterasu" tabindex="0">
+        <div class="card__seal">炎</div>
+        <div class="card__top">
+          <span class="card__num">02 / ENTON</span>
+          <span class="card__rank">HIGHEST FIRE RELEASE</span>
+        </div>
+        <h3 class="card__jp">天照</h3>
+        <p class="card__ro">AMATERASU · INFERNO OF THE SUN</p>
+        <p class="card__txt">Black flames materialized at the exact focal point of Itachi's gaze. Burning hotter than the sun, they cannot be extinguished by ordinary water or winds, devouring whatever they touch for seven continuous days and nights.</p>
+        <div class="card__stats">
+          <div class="stat-item"><span>RANGE</span><b>Line of Sight</b></div>
+          <div class="stat-item"><span>TYPE</span><b>Dōjutsu Ninjutsu</b></div>
+          <div class="stat-item"><span>COST</span><b>Right Eye Bleed</b></div>
+        </div>
+        <div class="card__foot">
+          <i>不滅の黒炎</i>
+          <span>CLICK TO IGNITE FLAMES</span>
+        </div>
+      </article>
+
+      <!-- Card 3: Susanoo -->
+      <article class="card" data-jutsu="susanoo" tabindex="0">
+        <div class="card__seal">神</div>
+        <div class="card__top">
+          <span class="card__num">03 / AVATAR</span>
+          <span class="card__rank">ULTIMATE DEFENSE</span>
+        </div>
+        <h3 class="card__jp">須佐能乎</h3>
+        <p class="card__ro">SUSANOO · TEMPESTUOUS VALOR</p>
+        <p class="card__txt">The colossal chakra avatar awakened only by those who master both Mangekyō eyes. Wields the Totsuka Blade — a gourd sword that seals any pierced foe into eternal drunken slumber — and the impenetrable Yata Mirror shield.</p>
+        <div class="card__stats">
+          <div class="stat-item"><span>RANGE</span><b>All Ranges</b></div>
+          <div class="stat-item"><span>TYPE</span><b>Divine Armor</b></div>
+          <div class="stat-item"><span>RELICS</span><b>Totsuka & Yata</b></div>
+        </div>
+        <div class="card__foot">
+          <i>絶対防御</i>
+          <span>CLICK TO SUMMON WARRIOR</span>
+        </div>
+      </article>
+
+      <!-- Card 4: Izanami -->
+      <article class="card" data-jutsu="izanami" tabindex="0">
+        <div class="card__seal">輪</div>
+        <div class="card__top">
+          <span class="card__num">04 / DESTINY</span>
+          <span class="card__rank">FATE ARBITER</span>
+        </div>
+        <h3 class="card__jp">伊邪那美</h3>
+        <p class="card__ro">IZANAMI · LOOP OF ACCEPTANCE</p>
+        <p class="card__txt">The ultimate forbidden ocular jutsu created to counter Izanagi and save Uchiha from hubris. Binds physical sensations to trap the foe within an unbreakable causal time loop until they cease deception and accept their authentic fate.</p>
+        <div class="card__stats">
+          <div class="stat-item"><span>RANGE</span><b>Physical Touch</b></div>
+          <div class="stat-item"><span>TYPE</span><b>Destiny Jutsu</b></div>
+          <div class="stat-item"><span>COST</span><b>Permanent Blindness</b></div>
+        </div>
+        <div class="card__foot">
+          <i>運命の輪廻</i>
+          <span>CLICK TO ENTER LOOP</span>
+        </div>
+      </article>
+    </div>
+
+    <div class="jutsu__foot" data-px="0.14">
+      <span>「命を賭して、里を守る。」</span>
+      <span>TO PROTECT THE VILLAGE, HE SURRENDERED BEING LOVED BY IT</span>
+    </div>
+  </div>
+
+  <!-- Bottom-Right Aesthetic Anchor -->
+  <div class="jutsu__amaterasu" aria-hidden="true">
+    <span class="jutsu__amaterasu-jp">天照</span>
+    <span class="jutsu__amaterasu-ro">AMATERASU</span>
+    <span class="jutsu__amaterasu-sub">黒炎 · 七日七夜 · 消えぬ火</span>
+  </div>
+</section>
+
+<!-- ══════════ ACT IV — PHILOSOPHICAL QUOTES ══════════ -->
+<section class="quote" id="quote">
+  <div class="quote__kanji-bg" aria-hidden="true">写輪眼</div>
+
+  <div class="quote__container">
+    <span class="eyebrow" data-reveal>言の葉 · WORDS OF THE MARTYR</span>
+    
+    <div class="quote__jp" data-reveal>
+      許せ、サスケ<span class="dots">…</span> これで最後だ
+    </div>
+
+    <!-- Interactive Quote Display -->
+    <blockquote data-reveal>
+      <p id="quoteText">“Those who cannot acknowledge their true selves are bound to fail. People live their lives bound by what they accept as correct and true — that is how they define ‘reality’. But what does it mean to be ‘correct’? Merely vague concepts... their ‘reality’ may all be a mirage.”</p>
+      <cite id="quoteCite">うちはイタチ · UCHIHA ITACHI</cite>
+    </blockquote>
+
+    <!-- Quote Selectors -->
+    <div class="quote__nav" data-reveal>
+      <button class="quote__tab active" data-quote="0">01 / REALITY</button>
+      <button class="quote__tab" data-quote="1">02 / BROTHERHOOD</button>
+      <button class="quote__tab" data-quote="2">03 / HOKAGE</button>
+      <button class="quote__tab" data-quote="3">04 / SACRIFICE</button>
+    </div>
+
+    <div class="quote__mark" data-reveal>
+      <span>木ノ葉の影の英雄</span>
+      <i>A TRUE SHINOBI PROTECTS FROM THE SHADOWS</i>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ ACT V — EPILOGUE & FOOTER ══════════ -->
+<footer id="end">
+  <div class="footer__inner">
+    <div class="footer__crest" aria-hidden="true">
+      <svg viewBox="0 0 100 100" class="footer__mon">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M50 12 A38 38 0 0 1 50 88 A19 19 0 0 1 50 50 A19 19 0 0 0 50 12Z" fill="currentColor" opacity=".85"/>
+        <circle cx="50" cy="31" r="6" fill="#050506"/>
+        <circle cx="50" cy="69" r="6" fill="currentColor"/>
+      </svg>
+    </div>
+
+    <div class="footer__big" data-reveal>木ノ葉の意志</div>
+
+    <div class="footer__summary" data-reveal>
+      <div class="summary-col">
+        <h4>CLAN HERITAGE</h4>
+        <p>Uchiha Clan (うちは一族) of Konohagakure. Bearer of the Curse of Hatred, transformed into the Will of Fire.</p>
+      </div>
+      <div class="summary-col">
+        <h4>RANK & DESIGNATION</h4>
+        <p>Konoha ANBU Captain (Age 13) · Akatsuki Undercover Operative · Rogue S-Class Ninja.</p>
+      </div>
+      <div class="summary-col">
+        <h4>FINAL WORDS</h4>
+        <p>「お前がこれからどうなろうと、おれはお前をずっと愛している。」<br>“No matter what you decide to do from now on, I will love you always.”</p>
+      </div>
+    </div>
+
+    <div class="footer__divider"></div>
+
+    <div class="footer__row" data-reveal>
+      <div class="footer__col-left">
+        <span class="footer__title">UCHIHA ITACHI CHRONICLE</span>
+        <span class="footer__author">CRAFTED WITH WILL OF FIRE · DESIGNED & ENGINEERED BY ISHAN</span>
+      </div>
+      <div class="footer__col-right">
+        <span>JUNE 9 — MARCH 25</span>
+        <span>「いつまでも、愛してるよ。」</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</main>
+
+<!-- ══════════ JUTSU DETAIL MODAL ══════════ -->
+<dialog class="jutsu-modal" id="jutsuModal">
+  <div class="jutsu-modal__content">
+    <button class="jutsu-modal__close" id="modalClose" type="button" aria-label="Close modal">✕</button>
+    <div class="jutsu-modal__header">
+      <span class="modal-badge" id="modalRank">S-RANK KINJUTSU</span>
+      <h2 id="modalJp">月読</h2>
+      <p class="modal-ro" id="modalRo">TSUKUYOMI</p>
+    </div>
+    <div class="jutsu-modal__body">
+      <p class="modal-desc" id="modalDesc"></p>
+      <div class="modal-grid">
+        <div class="modal-grid-item">
+          <span>CLASSIFICATION</span>
+          <b id="modalType">Kekkei Genkai, Dōjutsu</b>
+        </div>
+        <div class="modal-grid-item">
+          <span>ELEMENT / AFFINITY</span>
+          <b id="modalAffinity">Yin Release (陰遁)</b>
+        </div>
+        <div class="modal-grid-item">
+          <span>HAND SEALS / IN</span>
+          <b id="modalSeals">None (Direct Eye Contact)</b>
+        </div>
+        <div class="modal-grid-item">
+          <span>OCULAR TOLL</span>
+          <b id="modalToll">Progressive Loss of Vision</b>
+        </div>
+      </div>
+    </div>
+    <div class="jutsu-modal__foot">
+      <button class="modal-action-btn" id="modalTriggerAction" type="button">ACTIVATE TECHNIQUE</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- ══════════ STICKY FLOATING BADGE ══════════ -->
+<div class="sticky-badge" id="stickyBadge">
+  <span class="sticky-badge__jp">写輪眼</span>
+  <span class="sticky-badge__en">SHARINGAN</span>
+</div>
+
+<script src="main.js"></script>
+</body>
+</html>
